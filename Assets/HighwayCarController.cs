@@ -13,7 +13,9 @@ public class HighwayCarController: MonoBehaviour
     protected void Start ( )
     {
         //Instantiate(gameObject, new Vector3(gameObject.transform.position.x - R.Next(20,60), R.Next(2) * (-10)), transform.rotation);
-        Speed = Direction * StartSpeed * R.Next(4, 11) / 10;
+        Speed = Direction * StartSpeed;
+
+        CarStops = R.Next(0, 100) <= SlowChance;
     }
 
     protected void Update ( )
@@ -23,32 +25,46 @@ public class HighwayCarController: MonoBehaviour
 
     protected void FixedUpdate ( )
     {
-        Cycle++;
-
-        if (Stopping && Velocity < ThresholdSpeed && Cycle == UncheckCycle)
-        {
-            Cycle = 0;
-            Stopping = false;
-        }
-        else if (Cycle % CheckCycle == 0 && R.Next(0, 100) < SlowChance)
-        {
-            //RDecelerate( );
-            Speed = Vector2.zero;
-            Stopping = true;
-            Cycle = 0;
-        }
-
-        Accelerate(!Obstacle( ) && !Stopping);
-
         if (Body.position.x >= CarSpawner.despawnPosition)
             Destroy(gameObject);
+
+
+
+
+        if (CarStops)
+        {
+            Cycle++;
+
+            if (Stopping && Velocity <= ThresholdSpeed)
+            {
+                if (Cycle == UncheckCycle)
+                {
+                    CarStops = false;
+                    Stopping = false;
+                }
+                if (Cycle >= UncheckCycle)
+                    Cycle = 0;
+            }
+            else if (Stopping || (Cycle % CheckCycle == 0 && R.Next(0, 100) <= SlowChance))
+            {
+                RDecelerate( );
+                if (!Stopping)
+                {
+                    Stopping = true;
+                    Cycle = 0;
+                }
+            }
+        }
+
+        if (!Stopping)
+            Accelerate(!Obstacle( ));
 
     }
 
     protected void RDecelerate ( )
     {
         if (Velocity > ThresholdSpeed)
-            Speed = Speed.normalized * (Velocity - SpeedV3 * Deceleration);
+            Speed = Speed.normalized * Math.Abs(Velocity - SpeedV3 * Deceleration);
         else
             Speed = Vector2.zero;
     }
@@ -79,23 +95,30 @@ public class HighwayCarController: MonoBehaviour
     protected bool Obstacle ( )
     {
         return Physics2D.RaycastAll(Body.position, Direction, Speed.magnitude * (DistanceMultiplier1 + MinSpeed)).
-            Where(p => p.rigidbody != Body).Any(p => p.distance <= MinimumDistance1 || p.distance < Speed.magnitude * DistanceMultiplier1);
+            Where(p => p.rigidbody != Body).Any(p => p.distance <= MinimumDistance1 || p.distance < Velocity * DistanceMultiplier1);
     }
 
-    protected void OnMouseDown ( )
+    public void OnMouseDown ( )
     {
         Time.timeScale = Time.timeScale == 0 ? 1 : 0;
+    }
+
+    public void OnCollisionEnter (Collision c)
+    {
+        Time.timeScale = 0;
     }
 
     #region Stops
 
     public static int SlowChance = 35;
-    protected ushort CheckCycle = 25;
+    protected static int StopChance = 25;
+    protected static ushort CheckCycle = 30;
 
     protected static System.Random R = new System.Random( );
+    protected static uint UncheckCycle = 25;
     protected uint Cycle = 0;
-    protected uint UncheckCycle = 5;
     protected bool Stopping = false;
+    protected bool CarStops = false;
 
     #endregion
 
@@ -129,10 +152,10 @@ public class HighwayCarController: MonoBehaviour
 
     public static float RunSpeed = 1f;
 
-    public static float ThresholdSpeed = RunSpeed * 4f;
+    public static float ThresholdSpeed = RunSpeed * 5f;
     public static float MinSpeed = RunSpeed * 40f;
-    public static float StartSpeed = RunSpeed * 80f;
-    public static float MaxSpeed = RunSpeed * 130f;
+    public static float StartSpeed = RunSpeed * 70f;
+    public static float MaxSpeed = RunSpeed * 100f;
 
     #endregion 
 
@@ -140,7 +163,7 @@ public class HighwayCarController: MonoBehaviour
 
     public static float SpeedV1 = RunSpeed * 2.5f;
     public static float SpeedV2 = RunSpeed * 4f;
-    public static float SpeedV3 = RunSpeed * 27f;
+    public static float SpeedV3 = RunSpeed * 15f;
 
     public static float MinimumDistance1 = 15f;
     public static float DistanceMultiplier1 = 1.5f / 3.6f;

@@ -1,38 +1,29 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
-
-    //initialisation
     void Start ( )
     {
-        /*angle = GetComponent<Rigidbody2D> ().rotation;
-		speed = GetComponent<Rigidbody2D> ().velocity.magnitude;*/
 		
     }
 
-    //once per frame
     void Update ( )
     {
 		
     }
 
-    //once per game engine tick
     void FixedUpdate ( )
     {
-        //Rigidbody2D Car = GetComponent<Rigidbody2D> ( );
         float speed = GetComponent<Rigidbody2D>( ).velocity.magnitude;
         float angle = GetComponent<Rigidbody2D>( ).rotation;
 
-        if (Input.GetButton("Accelerate"))
-            GetComponent<Rigidbody2D>( ).AddForce(transform.up * carSpeed);
+        if (Input.GetButton("Vertical"))
+            GetComponent<Rigidbody2D>( ).velocity = transform.up.normalized * carSpeed * Math.Sign(Input.GetAxisRaw("Vertical"));
 
-        if (Input.GetButton("Decelerate"))
-            GetComponent<Rigidbody2D>( ).AddForce(transform.up * -carSpeed);
-
-        if (Input.GetButton("Brake"))
+        if (Input.GetButton("Jump"))
         {
             speed = speed * decelRate;
             if (speed <= minSpeed)
@@ -42,16 +33,10 @@ public class CarController : MonoBehaviour
             }
         }
 
-        if (Input.GetButton ("Left"))
-            angle = angle + angleIncrement * angleSpeedMultiplier * speed;
-
-        if (Input.GetButton ("Right"))
-            angle = angle - angleIncrement * angleSpeedMultiplier * speed;
-
+        if (Input.GetButton ("Horizontal"))
+            angle = angle + angleIncrement * angleSpeedMultiplier * speed * Math.Sign(-Input.GetAxisRaw("Horizontal"));
 
         GetComponent<Rigidbody2D>( ).rotation = angle;
-        //GetComponent<Rigidbody2D>( ).velocity = GetComponent<Rigidbody2D>( ).velocity.normalized * speed;
-
     }
 
 
@@ -59,9 +44,7 @@ public class CarController : MonoBehaviour
 
 
     private readonly float angleSpeedMultiplier = 0.39f;
-    private readonly float angleIncrement = 2.25f;
-    //private readonly float defaultDecelRate = 0.3f;
+    private readonly float angleIncrement = 1.3f;
     private readonly float decelRate = 0.91f;
-    private readonly float carSpeed = 4.6f;
-
+    private readonly float carSpeed = 17f;
 }
