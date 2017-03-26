@@ -5,16 +5,6 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
-    void Start ( )
-    {
-		
-    }
-
-    void Update ( )
-    {
-		
-    }
-
     void FixedUpdate ( )
     {
         float speed = GetComponent<Rigidbody2D>( ).velocity.magnitude;
